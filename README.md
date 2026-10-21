@@ -79,3 +79,6 @@ Tickets snapshot the matched policy and deadlines. Tickets without a matching po
 ```powershell
 dotnet build .\src\ServiceDesk.Web\ServiceDesk.Web.csproj
 ```
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/df40096f-fdc9-479f-93ce-492fe033a654" />
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/ccd4e5fc-13fc-4af7-89dc-736de63f66e3" />
+
