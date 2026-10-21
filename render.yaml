@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: service-desk-demo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /Portal
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ServiceDesk__PublicDemo
+        value: "true"
+      - key: ConnectionStrings__DefaultConnection
+        value: "Data Source=/tmp/service-desk.db"
+      - key: AllowedHosts
+        value: "*"

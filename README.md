@@ -33,6 +33,18 @@ The Development launch profile sets `ASPNETCORE_ENVIRONMENT=Development` and lis
 
 The local Development authentication handler signs every request in as the seeded demo user. It is intended only to make the starter immediately runnable; it does not authenticate real users.
 
+## Public demo on Render
+
+This repository includes a Render Blueprint and Dockerfile for a public, non-sensitive demo:
+
+1. Sign in to [Render](https://render.com/) and connect your GitHub account.
+2. Create a new Blueprint instance and select this repository.
+3. Review the `service-desk-demo` service from `render.yaml` and deploy it. Render will provide the public URL when deployment completes.
+
+The Blueprint explicitly enables `ServiceDesk:PublicDemo` while keeping ASP.NET Core in Production mode. This uses the shared demo identity; it is **not authentication**. Anyone with the URL can act as the demo agent/requester, so do not enter real or private information.
+
+The free Render service can sleep when idle, and its filesystem is ephemeral. The SQLite database may be reset after sleep, restart, or redeploy. Use this setup only to preview the app, not for production or data that must persist.
+
 ## Project structure
 
 ```text
@@ -54,7 +66,7 @@ The local database connection string is in `src/ServiceDesk.Web/appsettings.json
 }
 ```
 
-The runnable host is deliberately Development-only. Before using this application outside a local development environment:
+The runnable host is Development-only except for the explicit, non-sensitive public demo opt-in. Before using this application for real users or outside that demo:
 
 1. Replace the demo authentication handler with your identity provider and authorization policies.
 2. Implement `ITenantContext`, `ICurrentAgent`, and `ICurrentRequester` from authenticated claims and trusted tenant membership data.

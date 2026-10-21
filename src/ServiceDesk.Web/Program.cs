@@ -8,12 +8,14 @@ using ServiceDesk.Web.Authentication;
 using ServiceDesk.Web.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+var publicDemoEnabled = builder.Configuration.GetValue<bool>("ServiceDesk:PublicDemo");
 
-if (!builder.Environment.IsDevelopment())
+if (!builder.Environment.IsDevelopment() && !publicDemoEnabled)
 {
     throw new InvalidOperationException(
         "This starter host is development-only. Configure production authentication, tenant context, " +
-        "requester/agent identity services, and deployment settings before running outside Development.");
+        "requester/agent identity services, and deployment settings before running outside Development. " +
+        "The public demo mode is only for non-sensitive demonstrations.");
 }
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -44,7 +46,7 @@ builder.Services.AddTicketOperations();
 
 var app = builder.Build();
 
-await InitializeDevelopmentDatabaseAsync(app);
+await InitializeDemoDatabaseAsync(app);
 
 app.UseStaticFiles();
 app.UseAuthentication();
@@ -54,7 +56,7 @@ app.MapRazorPages();
 
 await app.RunAsync();
 
-static async Task InitializeDevelopmentDatabaseAsync(WebApplication app)
+static async Task InitializeDemoDatabaseAsync(WebApplication app)
 {
     await using var scope = app.Services.CreateAsyncScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
