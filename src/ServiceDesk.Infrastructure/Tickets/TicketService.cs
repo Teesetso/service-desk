@@ -270,7 +270,7 @@ public sealed class TicketService : ITicketService
         }
 
         var now = _timeProvider.GetUtcNow();
-        ticket.GroupHistory.Add(new TicketGroupHistory
+        _dbContext.TicketGroupHistories.Add(new TicketGroupHistory
         {
             HistoryId = Guid.NewGuid(),
             TenantId = ticket.TenantId,
