@@ -1,0 +1,148 @@
+@page
+@model ServiceDesk.Web.Pages.Tickets.IndexModel
+@{
+    ViewData["Title"] = "Tickets";
+    var tabs = new[]
+    {
+        (TicketQueueTab.MyAssignedTickets, "My assigned tickets"),
+        (TicketQueueTab.MyGroupsUnassigned, "My groups' unassigned work"),
+        (TicketQueueTab.AllMyGroups, "All my groups' tickets"),
+        (TicketQueueTab.Triage, "Triage"),
+        (TicketQueueTab.Sla, "Breached/Approaching SLA")
+    };
+}
+
+<h1>Tickets</h1>
+<div class="page-heading">
+    <div>
+        <p>Review, prioritize, and route work across your resolver groups.</p>
+    </div>
+</div>
+
+<nav class="queue-tabs" aria-label="Ticket queues">
+    @foreach (var (tab, label) in tabs)
+    {
+        <a asp-page="./Index"
+           asp-route-tab="@tab"
+           class="@(Model.Tab == tab ? "active" : "")"
+           aria-current="@(Model.Tab == tab ? "page" : null)">@label</a>
+    }
+</nav>
+
+<section class="panel">
+    <form method="get" class="filter-form">
+        <input type="hidden" asp-for="Tab" />
+        <div class="field search-field">
+            <label asp-for="Search">Search tickets</label>
+            <input asp-for="Search" placeholder="Reference, title, or description" />
+        </div>
+        <div class="field">
+            <label asp-for="Status">Status</label>
+            <select asp-for="Status" asp-items="Html.GetEnumSelectList<TicketStatus>()">
+                <option value="">All statuses</option>
+            </select>
+        </div>
+        <div class="field">
+            <label asp-for="Type">Type</label>
+            <select asp-for="Type" asp-items="Html.GetEnumSelectList<TicketType>()">
+                <option value="">All types</option>
+            </select>
+        </div>
+        <div class="field">
+            <label asp-for="Priority">Priority</label>
+            <select asp-for="Priority" asp-items="Html.GetEnumSelectList<TicketPriority>()">
+                <option value="">All priorities</option>
+            </select>
+        </div>
+        <button type="submit">Apply filters</button>
+    </form>
+</section>
+
+@if (Model.Tab == TicketQueueTab.Sla)
+{
+    <p class="muted">Includes breached deadlines and deadlines due within the next four hours.</p>
+}
+
+<section class="panel">
+    <div class="panel-heading">
+        <h2>@tabs.First(tab => tab.Item1 == Model.Tab).Item2</h2>
+        <span class="muted">@Model.Tickets.Count ticket(s)</span>
+    </div>
+    @if (Model.Tickets.Count == 0)
+    {
+        <div class="empty-state">
+            <strong>No tickets in this queue</strong>
+            Adjust the filters or select a different queue.
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Ticket</th>
+                        <th>Customer</th>
+                        <th>Resolver group</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>SLA due</th>
+                        @if (Model.Tab == TicketQueueTab.Sla)
+                        {
+                            <th>SLA state</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var ticket in Model.Tickets)
+                {
+                    var statusClass = ticket.Status.ToString().ToLowerInvariant();
+                    var priorityClass = ticket.Priority.ToString().ToLowerInvariant();
+                    <tr>
+                        <td><a class="ticket-reference" asp-page="./Details" asp-route-id="@ticket.TicketId">@ticket.Reference</a></td>
+                        <td><span class="ticket-title">@ticket.Title</span><br /><span class="muted">@ticket.Type</span></td>
+                        <td>@ticket.Customer?.Name</td>
+                        <td>@ticket.Group?.Name</td>
+                        <td><span class="status-badge status-@statusClass">@ticket.Status</span></td>
+                        <td><span class="priority-badge priority-@priorityClass">@ticket.Priority</span></td>
+                        <td>@ticket.SlaDueAt?.ToString("u")</td>
+            @if (Model.Tab == TicketQueueTab.Sla)
+            {
+                        <td>
+                            <span class="sla-badge @(ticket.SlaDueAt.HasValue && ticket.SlaDueAt.Value <= DateTimeOffset.UtcNow ? "sla-breached" : "sla-approaching")">
+                                @(ticket.SlaDueAt.HasValue && ticket.SlaDueAt.Value <= DateTimeOffset.UtcNow ? "Breached" : "Approaching")
+                            </span>
+                        </td>
+            }
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+
+<nav class="pagination" aria-label="Ticket queue pages">
+    @if (Model.PageNumber > 1)
+    {
+        <a asp-page="./Index"
+           asp-route-tab="@Model.Tab"
+           asp-route-pageNumber="@(Model.PageNumber - 1)"
+           asp-route-search="@Model.Search"
+           asp-route-status="@Model.Status"
+           asp-route-type="@Model.Type"
+           asp-route-priority="@Model.Priority">Previous</a>
+    }
+    <span>Page @Model.PageNumber</span>
+    @if (Model.HasNextPage)
+    {
+        <a asp-page="./Index"
+           asp-route-tab="@Model.Tab"
+           asp-route-pageNumber="@(Model.PageNumber + 1)"
+           asp-route-search="@Model.Search"
+           asp-route-status="@Model.Status"
+           asp-route-type="@Model.Type"
+           asp-route-priority="@Model.Priority">Next</a>
+    }
+</nav>
+</section>

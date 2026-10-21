@@ -1,0 +1,11 @@
+.git/
+**/bin/
+**/obj/
+**/TestResults/
+.vs/
+.vscode/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3

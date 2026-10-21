@@ -1,0 +1,144 @@
+@page
+@model ServiceDesk.Web.Pages.Tickets.DetailsModel
+@{
+    ViewData["Title"] = Model.Ticket.Reference;
+    var statusClass = Model.Ticket.Status.ToString().ToLowerInvariant();
+    var priorityClass = Model.Ticket.Priority.ToString().ToLowerInvariant();
+}
+
+<div class="page-heading">
+    <div>
+        <div class="eyebrow">TICKET DETAILS</div>
+        <h1>@Model.Ticket.Reference</h1>
+        <p>@Model.Ticket.Title</p>
+    </div>
+</div>
+
+@if (TempData["StatusMessage"] is string message)
+{
+    <p role="status">@message</p>
+}
+<div asp-validation-summary="All"></div>
+
+<div class="details-layout">
+    <div class="details-main">
+        <section class="panel">
+            <div class="panel-heading">
+                <h2>Conversation</h2>
+                <span class="status-badge status-@statusClass">@Model.Ticket.Status</span>
+            </div>
+            <p class="ticket-description">@Model.Ticket.Description</p>
+
+            <h3>Activity</h3>
+            @if (Model.Ticket.Activities.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No activity yet</strong>
+                    Replies and internal notes will appear here.
+                </div>
+            }
+            else
+            {
+                <ol class="activity-list">
+                    @foreach (var activity in Model.Ticket.Activities.OrderBy(activity => activity.OccurredAt))
+                    {
+                        var activityClass = activity.Visibility.ToString().Contains("Internal", StringComparison.OrdinalIgnoreCase)
+                            ? "activity-internal"
+                            : "activity-public";
+                        <li class="activity-item @activityClass">
+                            <div class="activity-meta">
+                                <strong>@activity.Kind · @activity.Visibility</strong>
+                                <span>by @activity.ActorId · @activity.OccurredAt.ToString("u")</span>
+                            </div>
+                            <p>@activity.Content</p>
+                        </li>
+                    }
+                </ol>
+            }
+        </section>
+
+        <section class="panel">
+            <div class="panel-heading">
+                <div>
+                    <div class="eyebrow">COMMUNICATION</div>
+                    <h2>Reply or add a note</h2>
+                </div>
+            </div>
+            <form method="post" asp-page-handler="PublicReply" class="communication-form">
+                <input type="hidden" name="id" value="@Model.Ticket.TicketId" />
+                <label asp-for="ActivityContent">Public reply <span class="muted">(visible to the requester)</span></label>
+                <textarea asp-for="ActivityContent" rows="4" placeholder="Write a reply..." maxlength="10000"></textarea>
+                <span asp-validation-for="ActivityContent"></span>
+                <button type="submit">Send public reply</button>
+            </form>
+            <form method="post" asp-page-handler="InternalNote" class="communication-form">
+                <input type="hidden" name="id" value="@Model.Ticket.TicketId" />
+                <label asp-for="ActivityContent">Internal note <span class="muted">(agents only)</span></label>
+                <textarea asp-for="ActivityContent" rows="4" placeholder="Write an internal note..." maxlength="10000"></textarea>
+                <span asp-validation-for="ActivityContent"></span>
+                <button type="submit">Add internal note</button>
+            </form>
+        </section>
+    </div>
+
+    <aside class="details-aside">
+        <section class="panel">
+            <div class="panel-heading"><h2>Ticket information</h2></div>
+            <dl class="side-detail">
+                <dt>Type</dt><dd>@Model.Ticket.Type</dd>
+                <dt>Status</dt><dd><span class="status-badge status-@statusClass">@Model.Ticket.Status</span></dd>
+                <dt>Priority</dt><dd><span class="priority-badge priority-@priorityClass">@Model.Ticket.Priority</span></dd>
+                <dt>Customer</dt><dd>@Model.Ticket.Customer?.Name</dd>
+                <dt>Resolver group</dt><dd>@Model.Ticket.Group?.Name</dd>
+                <dt>Created</dt><dd>@Model.Ticket.CreatedAt.ToString("u")</dd>
+                <dt>SLA due</dt><dd>@(Model.Ticket.SlaDueAt?.ToString("u") ?? "Not set")</dd>
+            </dl>
+        </section>
+
+        <section class="panel">
+            <div class="panel-heading">
+                <div>
+                    <div class="eyebrow">ROUTING</div>
+                    <h2>Transfer ticket</h2>
+                </div>
+            </div>
+            <form method="post" asp-page-handler="Transfer" class="transfer-form">
+                <input type="hidden" name="id" value="@Model.Ticket.TicketId" />
+                <label asp-for="DestinationGroupId">Active resolver group</label>
+                <select asp-for="DestinationGroupId">
+                    <option value="">Select a group</option>
+                    @foreach (var group in Model.ActiveGroups)
+                    {
+                        <option value="@group.GroupId">@group.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="DestinationGroupId"></span>
+                <button type="submit">Transfer ticket</button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <div class="panel-heading"><h2>Group history</h2></div>
+            @if (Model.Ticket.GroupHistory.Count == 0)
+            {
+                <p class="muted">No group transfers recorded.</p>
+            }
+            else
+            {
+                <ol class="history-list">
+                    @foreach (var change in Model.Ticket.GroupHistory.OrderBy(change => change.ChangedAt))
+                    {
+                        <li class="history-item">
+                            <span class="history-dot"></span>
+                            <span>
+                                <strong>@(change.FromGroup?.Name ?? "Unrouted") &rarr; @change.ToGroup?.Name</strong><br />
+                                @change.ChangedAt.ToString("u")<br />
+                                <span class="muted">Transferred by @change.ChangedBy</span>
+                            </span>
+                        </li>
+                    }
+                </ol>
+            }
+        </section>
+    </aside>
+</div>

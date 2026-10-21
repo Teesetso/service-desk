@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Service Desk</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <a class="brand" asp-page="/Portal/Index" aria-label="Service Desk home">
+                <span class="brand-mark">SD</span>
+                <span class="brand-name">Service<span>Desk</span></span>
+            </a>
+
+            <div class="sidebar-caption">WORKSPACE</div>
+            <nav class="side-nav" aria-label="Main navigation">
+                <a asp-page="/Portal/Index" class="side-link @(Context.Request.Path.StartsWithSegments("/Portal") ? "active" : "")">
+                    <span class="nav-icon">⌂</span><span>Self-service portal</span>
+                </a>
+                <a asp-page="/Tickets/Index" class="side-link @(Context.Request.Path.StartsWithSegments("/Tickets") ? "active" : "")">
+                    <span class="nav-icon">▤</span><span>Tickets</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-caption sidebar-caption-spaced">TOOLS</div>
+            <div class="side-link side-link-muted"><span class="nav-icon">▧</span><span>Knowledge base</span></div>
+            <div class="side-link side-link-muted"><span class="nav-icon">▦</span><span>Service catalogue</span></div>
+
+            <div class="sidebar-bottom">
+                <div class="environment-label"><span></span> Local development</div>
+                <div class="sidebar-user">
+                    <div class="avatar">DU</div>
+                    <div><strong>Demo user</strong><small>Agent &amp; requester</small></div>
+                    <span class="user-menu">···</span>
+                </div>
+            </div>
+        </aside>
+
+        <div class="main-shell">
+            <header class="topbar">
+                <div class="breadcrumbs"><span>Service Desk</span><span class="crumb-separator">/</span><strong>@ViewData["Title"]</strong></div>
+                <div class="topbar-actions">
+                    <span class="tenant-pill"><span class="tenant-dot"></span> Local Development Tenant</span>
+                    <button class="icon-button" type="button" aria-label="Notifications">♧</button>
+                    <div class="avatar avatar-light">DU</div>
+                </div>
+            </header>
+            <main class="page-content">
+                @RenderBody()
+            </main>
+            <footer class="app-footer">Service Desk <span>·</span> Local development environment</footer>
+        </div>
+    </div>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

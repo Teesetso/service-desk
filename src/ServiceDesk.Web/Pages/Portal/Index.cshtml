@@ -1,0 +1,200 @@
+@page
+@model ServiceDesk.Web.Pages.Portal.IndexModel
+@{
+    ViewData["Title"] = "Self-service portal";
+}
+
+<div class="page-heading">
+    <div>
+        <div class="eyebrow">REQUESTER HOME</div>
+        <h1>How can we help?</h1>
+        <p>Find an answer or send a request to the service desk.</p>
+    </div>
+</div>
+
+@if (TempData["PortalStatusMessage"] is string message)
+{
+    <p role="status">@message</p>
+}
+<div asp-validation-summary="All"></div>
+
+<div class="portal-grid">
+    <div class="portal-main">
+        <section class="panel" aria-labelledby="catalogue-heading">
+            <div class="panel-heading">
+                <div>
+                    <div class="eyebrow">SERVICES</div>
+                    <h2 id="catalogue-heading">Service catalogue</h2>
+                </div>
+            </div>
+            <form method="get" class="search-row">
+                <input asp-for="CatalogueSearch" placeholder="Search services and requests..." />
+                <input type="hidden" name="KnowledgeSearch" value="@Model.KnowledgeSearch" />
+                <button type="submit">Search</button>
+            </form>
+
+            @if (Model.CatalogueItems.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No catalogue items found</strong>
+                    Try another search term.
+                </div>
+            }
+            else
+            {
+                <div class="catalogue-list">
+                @foreach (var item in Model.CatalogueItems)
+                {
+                    <a class="catalogue-card"
+                       asp-page="./Index"
+                       asp-route-selectedItemId="@item.ItemId"
+                       asp-route-catalogueSearch="@Model.CatalogueSearch"
+                       asp-route-knowledgeSearch="@Model.KnowledgeSearch">
+                        <span class="catalogue-icon">＋</span>
+                        <h3>@item.Title</h3>
+                        <p>@item.Description</p>
+                        <span class="card-meta">Eligibility: @item.Eligibility</span>
+                    </a>
+                }
+                </div>
+            }
+
+            @if (Model.SelectedItem is not null)
+            {
+                <section aria-labelledby="request-heading">
+                    <div class="request-form">
+                        <div>
+                            <div class="eyebrow">SERVICE REQUEST</div>
+                            <h2 id="request-heading">@Model.SelectedItem.Title</h2>
+                            <p class="muted">@Model.SelectedItem.Description</p>
+                            <p class="card-meta">Eligibility: @Model.SelectedItem.Eligibility</p>
+                            <p class="card-meta">Fulfilled by: @Model.SelectedItem.FulfilmentGroup?.Name</p>
+                        </div>
+                        <form method="post" asp-page-handler="SubmitRequest" class="request-form">
+                            <input type="hidden" name="ItemId" value="@Model.SelectedItem.ItemId" />
+                            @foreach (var field in Model.FormFields)
+                            {
+                                var fieldValue = Model.Answers.TryGetValue(field.Name, out var answer) ? answer : null;
+                                <div>
+                                    <label for="answer-@field.Name">
+                                        @field.Label
+                                        @if (field.Required)
+                                        {
+                                            <span aria-hidden="true">*</span>
+                                        }
+                                    </label>
+                                    @if (field.Type == "textarea")
+                                    {
+                                        <textarea id="answer-@field.Name"
+                                                  name="Answers[@field.Name]"
+                                                  maxlength="@field.MaxLength"
+                                                  required="@field.Required">@fieldValue</textarea>
+                                    }
+                                    else if (field.Type == "select")
+                                    {
+                                        <select id="answer-@field.Name"
+                                                name="Answers[@field.Name]"
+                                                required="@field.Required">
+                                            <option value="">Select...</option>
+                                            @foreach (var option in field.Options)
+                                            {
+                                                <option value="@option" selected="@(fieldValue == option)">@option</option>
+                                            }
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <input id="answer-@field.Name"
+                                               name="Answers[@field.Name]"
+                                               type="@(field.Type == "email" ? "email" : "text")"
+                                               maxlength="@field.MaxLength"
+                                               required="@field.Required"
+                                               value="@fieldValue" />
+                                    }
+                                </div>
+                            }
+                            <div class="check-row">
+                                <input asp-for="EligibilityConfirmed" />
+                                <label asp-for="EligibilityConfirmed">I confirm that I meet the eligibility requirements.</label>
+                            </div>
+                            <button type="submit">Submit service request</button>
+                        </form>
+                    </div>
+                </section>
+            }
+        </section>
+
+        <section class="panel incident-panel" aria-labelledby="incident-heading">
+            <div class="panel-heading">
+                <div>
+                    <div class="eyebrow">NEED SOMETHING FIXED?</div>
+                    <h2 id="incident-heading">Report an incident</h2>
+                    <p class="subheading">Incidents are routed to your tenant's triage group.</p>
+                </div>
+                <span class="catalogue-icon">!</span>
+            </div>
+            <form method="post" asp-page-handler="SubmitIncident" class="incident-form">
+                <div class="wide">
+                    <label asp-for="IncidentTitle">Title</label>
+                    <input asp-for="IncidentTitle" maxlength="300" placeholder="Briefly describe the issue" required />
+                </div>
+                <div>
+                    <label asp-for="IncidentPriority">Priority</label>
+                    <select asp-for="IncidentPriority" asp-items="Html.GetEnumSelectList<TicketPriority>()"></select>
+                </div>
+                <div class="wide">
+                    <label asp-for="IncidentDescription">What happened?</label>
+                    <textarea asp-for="IncidentDescription" maxlength="20000" placeholder="Include any details that will help us investigate" required></textarea>
+                </div>
+                <button type="submit">Submit incident</button>
+            </form>
+        </section>
+    </div>
+
+    <aside class="portal-side">
+        <section class="panel" aria-labelledby="knowledge-heading">
+            <div class="panel-heading">
+                <div>
+                    <div class="eyebrow">SELF-HELP</div>
+                    <h2 id="knowledge-heading">Knowledge base</h2>
+                </div>
+            </div>
+            <form method="get" class="search-row">
+                <input asp-for="KnowledgeSearch" placeholder="Search articles..." />
+                <input type="hidden" name="CatalogueSearch" value="@Model.CatalogueSearch" />
+                <button type="submit" aria-label="Search articles">⌕</button>
+            </form>
+            @if (!string.IsNullOrWhiteSpace(Model.KnowledgeSearch))
+            {
+                @if (Model.KnowledgeArticles.Count == 0)
+                {
+                    <div class="empty-state">
+                        <strong>No articles found</strong>
+                        Try different keywords.
+                    </div>
+                }
+                else
+                {
+                    <div class="article-list">
+                    @foreach (var article in Model.KnowledgeArticles)
+                    {
+                        <details class="article-link">
+                            <summary>@article.Title</summary>
+                            <p>@article.Content</p>
+                        </details>
+                    }
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="card-meta" style="margin-top:12px">Search published guides and common answers.</p>
+            }
+        </section>
+        <section class="panel">
+            <div class="eyebrow">QUICK TIP</div>
+            <h3>Include useful details</h3>
+            <p class="muted">Add the affected device or service, what you were doing, and any error message when reporting an incident.</p>
+        </section>
+    </aside>
+</div>

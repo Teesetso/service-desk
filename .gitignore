@@ -1,0 +1,18 @@
+**/bin/
+**/obj/
+**/out/
+**/TestResults/
+
+# Local databases and SQLite journal files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# User-specific IDE files
+.vs/
+.vscode/*
+!.vscode/extensions.json
+*.user
+*.suo
