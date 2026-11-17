@@ -1,51 +1,34 @@
 # Service Desk
 
-A multi-tenant IT service desk starter built with ASP.NET Core Razor Pages, C#, Entity Framework Core, and SQLite. It includes tenant-scoped ticket operations, a self-service portal, a service catalogue, knowledge article search, and SLA evaluation.
+A multi-tenant IT service desk demo built with ASP.NET Core and C#. It brings requester self-service and support-agent ticket workflows together, with tenant-scoped data access and SLA tracking.
 
-## Requirements
+**Tech:** .NET 8 · ASP.NET Core Razor Pages · Entity Framework Core · PostgreSQL/SQLite · Docker · Render
 
-- .NET 8 SDK
-- Windows, macOS, or Linux
+## What it does
 
-## Run locally
+- **Requester portal:** browse a service catalogue, search published knowledge articles, and submit incidents or service requests.
+- **Agent workspace:** view assigned work, group queues, triage, and tickets with breached or approaching SLAs.
+- **Ticket handling:** review activity and group history, transfer work, send public replies, and add internal notes.
+- **SLA evaluation:** match policies by tenant, customer, service, ticket type, and priority; snapshot deadlines on tickets and support paused statuses.
+- **Tenant-aware persistence:** use tenant-scoped EF Core query filters and tenant-aware relationships to help isolate tenant data.
 
-From your project folder (`C:\Users\User\Desktop\CVTS\cvts project\service-desk`), run:
+Tickets without a matching SLA policy receive an explicit unconfigured evaluation and no SLA deadlines. SLA clocks currently use elapsed calendar minutes, not business hours.
 
-```powershell
-Set-Location 'C:\Users\User\Desktop\CVTS\cvts project\service-desk'
-dotnet run --project '.\src\ServiceDesk.Web\ServiceDesk.Web.csproj'
-```
+## Screenshots
 
-If `dotnet` is not on your `PATH` on Windows, run it with its full path:
+<<<<<<< HEAD
+<img width="1351" height="635" alt="image" src="https://github.com/user-attachments/assets/0594b0aa-cc12-4539-8978-cd8bf067aeca" />
+<img width="1357" height="635" alt="image" src="https://github.com/user-attachments/assets/d4234870-df0f-44ab-adad-4eae31810707" />
+<img width="1349" height="630" alt="image" src="https://github.com/user-attachments/assets/8f36ac15-1045-4794-b40a-92b1f115da45" />
+<img width="1357" height="637" alt="image" src="https://github.com/user-attachments/assets/be0e7ac0-ca7d-4177-bb6e-2d8fa70ce41e" />
+<img width="1349" height="632" alt="image" src="https://github.com/user-attachments/assets/19646467-17fb-48cc-ad14-60ef0a45a118" />
+<img width="1352" height="632" alt="image" src="https://github.com/user-attachments/assets/60eee642-0ed9-4614-98ee-ef71faf7c276" />
 
-```powershell
-Set-Location 'C:\Users\User\Desktop\CVTS\cvts project\service-desk'
-& 'C:\Program Files\dotnet\dotnet.exe' run --project '.\src\ServiceDesk.Web\ServiceDesk.Web.csproj'
-```
+=======
 
-The Development launch profile sets `ASPNETCORE_ENVIRONMENT=Development` and listens at <http://localhost:5080>. On first start, the host creates `service-desk.db` in the web project's content directory and inserts sample tenant, user context, groups, catalogue, knowledge, and SLA data.
 
-## Pages
-
-- `/Portal` — browse published catalogue items, search published knowledge articles, submit an incident, or submit a catalogue request.
-- `/Tickets/Index` — agent queues for assigned tickets, group work, triage, and breached/approaching SLA.
-- `/Tickets/Details?id={ticketId}` — ticket activity, group history, transfers, public replies, and internal notes.
-
-The local Development authentication handler signs every request in as the seeded demo user. It is intended only to make the starter immediately runnable; it does not authenticate real users.
-
-## Public demo on Render
-
-This repository includes a Render Blueprint and Dockerfile for a public, non-sensitive demo:
-
-1. Sign in to [Render](https://render.com/) and connect your GitHub account.
-2. Create a new Blueprint instance and select this repository.
-3. Review the `service-desk-demo` service from `render.yaml` and deploy it. Render will provide the public URL when deployment completes.
-
-The Blueprint explicitly enables `ServiceDesk:PublicDemo` while keeping ASP.NET Core in Production mode. This uses the shared demo identity; it is **not authentication**. Anyone with the URL can act as the demo agent/requester, so do not enter real or private information.
-
-The free Render service can sleep when idle, and its filesystem is ephemeral. The SQLite database may be reset after sleep, restart, or redeploy. Use this setup only to preview the app, not for production or data that must persist.
-
-## Project structure
+>>>>>>> 12d129e (Update service desk application)
+## Architecture
 
 ```text
 src/
@@ -90,6 +73,7 @@ dotnet build .\src\ServiceDesk.Web\ServiceDesk.Web.csproj
 docker build -t service-desk .
 docker run -p 10000:10000 service-desk
 ## Main pages
+<<<<<<< HEAD
 
 | Route | Purpose |
 | --- | --- |
@@ -115,23 +99,35 @@ Before using this application with real users or outside the public demo:
 4. Use EF Core migrations and a deployment migration process instead of the development host's `EnsureCreated` initialization.
 5. Review and configure tenant-specific catalogue, knowledge, triage, and SLA data.
 
-The global EF Core query filters and tenant-aware foreign keys help isolate tenant data. Keep tenant resolution server-side; do not accept a tenant ID from an untrusted form or query parameter.
+Resolve tenants server-side; do not accept a tenant ID from an untrusted form or query parameter.
 
-## SLA behavior
 
-SLA policies match exactly on tenant (through the scoped context), customer, service/catalogue item, ticket type, and priority. A policy's `PausedStatusesJson` stores the statuses during which its clock pauses, for example:
 
-```json
-["WaitingForRequester"]
-```
+=======
+>>>>>>> 12d129e (Update service desk application)
 
-Tickets snapshot the matched policy and deadlines. Tickets without a matching policy return an explicit unconfigured evaluation and have no SLA deadlines or breach state. The current implementation uses elapsed calendar minutes, not business-hour calendars.
+| Route | Purpose |
+| --- | --- |
+| `/Portal` | Requester catalogue, knowledge search, incident submission, and service requests |
+| `/Tickets/Index` | Agent queues for assigned tickets, group work, triage, and SLA status |
+| `/Tickets/Details?id={ticketId}` | Ticket activity, group history, transfers, public replies, and internal notes |
 
-## Build
+## Public demo deployment
 
-```powershell
-dotnet build .\src\ServiceDesk.Web\ServiceDesk.Web.csproj
-```
-<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/df40096f-fdc9-479f-93ce-492fe033a654" />
-<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/ccd4e5fc-13fc-4af7-89dc-736de63f66e3" />
+The repository includes a [Render Blueprint](./render.yaml) and [Dockerfile](./Dockerfile) for deploying a public demo. Connect the repository to Render and create a Blueprint instance to deploy it.
 
+> **Demo only:** The public demo uses a shared identity and does not authenticate individual users. Anyone with the URL can act as the demo agent or requester. Do not enter real or private information. The free Render service may sleep while idle, and its filesystem is ephemeral, so the SQLite database can be reset after a restart, sleep, or redeploy. This deployment is for previewing the app, not production use.
+
+## Security and production notes
+
+The local Development authentication handler signs requests in as a seeded demo user. The public demo has an explicit opt-in while ASP.NET Core remains in Production mode, but it still uses the shared demo identity described above.
+
+Before using this application with real users or outside the public demo:
+
+1. Replace demo authentication with an identity provider and appropriate authorization policies.
+2. Implement `ITenantContext`, `ICurrentAgent`, and `ICurrentRequester` using authenticated claims and trusted tenant membership data.
+3. Configure a production database provider and protected connection string.
+4. Use EF Core migrations and a deployment migration process instead of the development host's `EnsureCreated` initialization.
+5. Review and configure tenant-specific catalogue, knowledge, triage, and SLA data.
+
+Resolve tenants server-side; do not accept a tenant ID from an untrusted form or query parameter.
