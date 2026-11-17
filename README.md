@@ -16,7 +16,6 @@ Tickets without a matching SLA policy receive an explicit unconfigured evaluatio
 
 ## Screenshots
 
-<<<<<<< HEAD
 <img width="1351" height="635" alt="image" src="https://github.com/user-attachments/assets/0594b0aa-cc12-4539-8978-cd8bf067aeca" />
 <img width="1357" height="635" alt="image" src="https://github.com/user-attachments/assets/d4234870-df0f-44ab-adad-4eae31810707" />
 <img width="1349" height="630" alt="image" src="https://github.com/user-attachments/assets/8f36ac15-1045-4794-b40a-92b1f115da45" />
@@ -24,10 +23,6 @@ Tickets without a matching SLA policy receive an explicit unconfigured evaluatio
 <img width="1349" height="632" alt="image" src="https://github.com/user-attachments/assets/19646467-17fb-48cc-ad14-60ef0a45a118" />
 <img width="1352" height="632" alt="image" src="https://github.com/user-attachments/assets/60eee642-0ed9-4614-98ee-ef71faf7c276" />
 
-=======
-
-
->>>>>>> 12d129e (Update service desk application)
 ## Architecture
 
 ```text
