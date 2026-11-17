@@ -68,7 +68,6 @@ dotnet build .\src\ServiceDesk.Web\ServiceDesk.Web.csproj
 docker build -t service-desk .
 docker run -p 10000:10000 service-desk
 ## Main pages
-<<<<<<< HEAD
 
 | Route | Purpose |
 | --- | --- |
