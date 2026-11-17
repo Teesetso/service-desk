@@ -16,9 +16,12 @@ Tickets without a matching SLA policy receive an explicit unconfigured evaluatio
 
 ## Screenshots
 
-![Service Desk requester portal preview](https://github.com/user-attachments/assets/df40096f-fdc9-479f-93ce-492fe033a654)
-
-![Service Desk agent ticket workflow preview](https://github.com/user-attachments/assets/ccd4e5fc-13fc-4af7-89dc-736de63f66e3)
+<img width="1351" height="635" alt="image" src="https://github.com/user-attachments/assets/0594b0aa-cc12-4539-8978-cd8bf067aeca" />
+<img width="1357" height="635" alt="image" src="https://github.com/user-attachments/assets/d4234870-df0f-44ab-adad-4eae31810707" />
+<img width="1349" height="630" alt="image" src="https://github.com/user-attachments/assets/8f36ac15-1045-4794-b40a-92b1f115da45" />
+<img width="1357" height="637" alt="image" src="https://github.com/user-attachments/assets/be0e7ac0-ca7d-4177-bb6e-2d8fa70ce41e" />
+<img width="1349" height="632" alt="image" src="https://github.com/user-attachments/assets/19646467-17fb-48cc-ad14-60ef0a45a118" />
+<img width="1352" height="632" alt="image" src="https://github.com/user-attachments/assets/60eee642-0ed9-4614-98ee-ef71faf7c276" />
 
 ## Architecture
 
@@ -92,12 +95,6 @@ Before using this application with real users or outside the public demo:
 
 Resolve tenants server-side; do not accept a tenant ID from an untrusted form or query parameter.
 
-<img width="1351" height="635" alt="image" src="https://github.com/user-attachments/assets/0594b0aa-cc12-4539-8978-cd8bf067aeca" />
-<img width="1357" height="635" alt="image" src="https://github.com/user-attachments/assets/d4234870-df0f-44ab-adad-4eae31810707" />
-<img width="1349" height="630" alt="image" src="https://github.com/user-attachments/assets/8f36ac15-1045-4794-b40a-92b1f115da45" />
-<img width="1357" height="637" alt="image" src="https://github.com/user-attachments/assets/be0e7ac0-ca7d-4177-bb6e-2d8fa70ce41e" />
-<img width="1349" height="632" alt="image" src="https://github.com/user-attachments/assets/19646467-17fb-48cc-ad14-60ef0a45a118" />
-<img width="1352" height="632" alt="image" src="https://github.com/user-attachments/assets/60eee642-0ed9-4614-98ee-ef71faf7c276" />
 
 
 
