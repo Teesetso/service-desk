@@ -90,9 +90,39 @@
                 <dt>Priority</dt><dd><span class="priority-badge priority-@priorityClass">@Model.Ticket.Priority</span></dd>
                 <dt>Customer</dt><dd>@Model.Ticket.Customer?.Name</dd>
                 <dt>Resolver group</dt><dd>@Model.Ticket.Group?.Name</dd>
+                <dt>Assigned agent</dt><dd>@(Model.Ticket.AssigneeUserId?.ToString() ?? "Unassigned")</dd>
                 <dt>Created</dt><dd>@Model.Ticket.CreatedAt.ToString("u")</dd>
                 <dt>SLA due</dt><dd>@(Model.Ticket.SlaDueAt?.ToString("u") ?? "Not set")</dd>
             </dl>
+        </section>
+
+        <section class="panel">
+            <div class="panel-heading">
+                <div>
+                    <div class="eyebrow">WORKFLOW</div>
+                    <h2>Assignment and status</h2>
+                </div>
+            </div>
+            @if (!Model.IsAssignedToCurrentAgent)
+            {
+                <form method="post" asp-page-handler="AssignToMe" class="communication-form">
+                    <input type="hidden" name="id" value="@Model.Ticket.TicketId" />
+                    <button type="submit">Assign to me</button>
+                </form>
+            }
+            else
+            {
+                <p class="muted">This ticket is assigned to you.</p>
+            }
+            <form method="post" asp-page-handler="UpdateStatus" class="transfer-form">
+                <input type="hidden" name="id" value="@Model.Ticket.TicketId" />
+                <label asp-for="NewStatus">Update status</label>
+                <select asp-for="NewStatus" asp-items="Html.GetEnumSelectList<TicketStatus>()">
+                    <option value="">Select a status</option>
+                </select>
+                <span asp-validation-for="NewStatus"></span>
+                <button type="submit">Save status</button>
+            </form>
         </section>
 
         <section class="panel">

@@ -9,19 +9,34 @@
 <body>
     <div class="app-shell">
         <aside class="sidebar">
-            <a class="brand" asp-page="/Portal/Index" aria-label="Service Desk home">
+            <a class="brand" href="/" aria-label="Service Desk home">
                 <span class="brand-mark">SD</span>
                 <span class="brand-name">Service<span>Desk</span></span>
             </a>
 
             <div class="sidebar-caption">WORKSPACE</div>
             <nav class="side-nav" aria-label="Main navigation">
-                <a asp-page="/Portal/Index" class="side-link @(Context.Request.Path.StartsWithSegments("/Portal") ? "active" : "")">
+                @if (User.IsInRole("Customer"))
+                {
+                    <a asp-page="/Portal/Index" class="side-link @(Context.Request.Path.StartsWithSegments("/Portal") ? "active" : "")">
                     <span class="nav-icon">⌂</span><span>Self-service portal</span>
-                </a>
-                <a asp-page="/Tickets/Index" class="side-link @(Context.Request.Path.StartsWithSegments("/Tickets") ? "active" : "")">
+                    </a>
+                    <a asp-page="/Portal/MyTickets" class="side-link @(Context.Request.Path.StartsWithSegments("/Portal/MyTickets") ? "active" : "")">
+                        <span class="nav-icon">▤</span><span>My tickets</span>
+                    </a>
+                }
+                @if (User.IsInRole("Agent"))
+                {
+                    <a asp-page="/Tickets/Index" class="side-link @(Context.Request.Path.StartsWithSegments("/Tickets") ? "active" : "")">
                     <span class="nav-icon">▤</span><span>Tickets</span>
-                </a>
+                    </a>
+                }
+                @if (User.IsInRole("Administrator"))
+                {
+                    <a asp-page="/Admin/Index" class="side-link @(Context.Request.Path.StartsWithSegments("/Admin") ? "active" : "")">
+                        <span class="nav-icon">⚙</span><span>Administration</span>
+                    </a>
+                }
             </nav>
 
             <div class="sidebar-caption sidebar-caption-spaced">TOOLS</div>
@@ -31,9 +46,11 @@
             <div class="sidebar-bottom">
                 <div class="environment-label"><span></span> Local development</div>
                 <div class="sidebar-user">
-                    <div class="avatar">DU</div>
-                    <div><strong>Demo user</strong><small>Agent &amp; requester</small></div>
-                    <span class="user-menu">···</span>
+                    <div class="avatar">@((User.Identity?.Name ?? "User").Substring(0, 1).ToUpperInvariant())</div>
+                    <div><strong>@User.Identity?.Name</strong><small>@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</small></div>
+                    <form method="post" asp-page="/Login" asp-page-handler="Logout">
+                        <button class="user-menu" type="submit" aria-label="Sign out">Sign out</button>
+                    </form>
                 </div>
             </div>
         </aside>
@@ -44,7 +61,7 @@
                 <div class="topbar-actions">
                     <span class="tenant-pill"><span class="tenant-dot"></span> Local Development Tenant</span>
                     <button class="icon-button" type="button" aria-label="Notifications">♧</button>
-                    <div class="avatar avatar-light">DU</div>
+                    <div class="avatar avatar-light">@((User.Identity?.Name ?? "User").Substring(0, 1).ToUpperInvariant())</div>
                 </div>
             </header>
             <main class="page-content">

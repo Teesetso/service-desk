@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using ServiceDesk.Domain.Entities;
+using ServiceDesk.Domain.Enums;
+using ServiceDesk.Domain.Abstractions;
 using ServiceDesk.Infrastructure.Tickets;
 
 namespace ServiceDesk.Web.Pages.Tickets;
@@ -10,10 +12,12 @@ namespace ServiceDesk.Web.Pages.Tickets;
 public sealed class DetailsModel : PageModel
 {
     private readonly ITicketService _ticketService;
+    private readonly ICurrentAgent _currentAgent;
 
-    public DetailsModel(ITicketService ticketService)
+    public DetailsModel(ITicketService ticketService, ICurrentAgent currentAgent)
     {
         _ticketService = ticketService;
+        _currentAgent = currentAgent;
     }
 
     public Ticket Ticket { get; private set; } = null!;
@@ -27,6 +31,12 @@ public sealed class DetailsModel : PageModel
     [BindProperty]
     public Guid DestinationGroupId { get; set; }
 
+    [BindProperty]
+    public TicketStatus NewStatus { get; set; }
+
+    public bool IsAssignedToCurrentAgent =>
+        Ticket.AssigneeUserId == _currentAgent.UserId;
+
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken cancellationToken)
     {
         return await LoadPageAsync(id, cancellationToken);
@@ -37,6 +47,44 @@ public sealed class DetailsModel : PageModel
 
     public Task<IActionResult> OnPostInternalNoteAsync(Guid id, CancellationToken cancellationToken) =>
         AddActivityAsync(id, isPublicReply: false, cancellationToken);
+
+    public async Task<IActionResult> OnPostAssignToMeAsync(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _ticketService.AssignToCurrentAgentAsync(id, cancellationToken);
+            TempData["StatusMessage"] = "Ticket assigned to you.";
+            return RedirectToPage(new { id });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    public async Task<IActionResult> OnPostUpdateStatusAsync(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _ticketService.UpdateStatusAsync(id, NewStatus, cancellationToken);
+            TempData["StatusMessage"] = "Ticket status updated.";
+            return RedirectToPage(new { id });
+        }
+        catch (ArgumentException exception)
+        {
+            ModelState.AddModelError(nameof(NewStatus), exception.Message);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+
+        return await LoadPageAsync(id, cancellationToken);
+    }
 
     public async Task<IActionResult> OnPostTransferAsync(Guid id, CancellationToken cancellationToken)
     {

@@ -8,7 +8,7 @@ using ServiceDesk.Infrastructure.Portal;
 
 namespace ServiceDesk.Web.Pages.Portal;
 
-[Authorize]
+[Authorize(Policy = "Customers")]
 public sealed class IndexModel : PageModel
 {
     private readonly IPortalService _portalService;

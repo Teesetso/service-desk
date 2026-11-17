@@ -27,6 +27,15 @@ public interface ITicketService
         Guid destinationGroupId,
         CancellationToken cancellationToken = default);
 
+    Task AssignToCurrentAgentAsync(
+        Guid ticketId,
+        CancellationToken cancellationToken = default);
+
+    Task UpdateStatusAsync(
+        Guid ticketId,
+        ServiceDesk.Domain.Enums.TicketStatus status,
+        CancellationToken cancellationToken = default);
+
     Task AddPublicReplyAsync(
         Guid ticketId,
         string content,

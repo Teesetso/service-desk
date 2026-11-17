@@ -258,6 +258,46 @@ input:not([type=checkbox]), select, textarea {
     background: #fff;
 }
 textarea { min-height: 100px; resize: vertical; }
+.login-page {
+    display: grid;
+    min-height: 100vh;
+    place-items: center;
+    padding: 20px;
+}
+.login-card {
+    width: min(390px, 100%);
+    padding: 30px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    box-shadow: 0 8px 30px rgba(32,62,79,.08);
+}
+.login-brand { margin: 0 0 28px; color: var(--navy); }
+.login-card h1 { margin-bottom: 6px; }
+.login-card form { display: grid; gap: 8px; margin-top: 22px; }
+.login-card form button { margin-top: 8px; }
+.login-help { margin: 20px 0 0; color: var(--muted); font-size: 11px; }
+.inline-form { display: flex; align-items: center; gap: 8px; }
+.inline-form select { min-width: 170px; }
+.inline-form button { min-height: 34px; padding: 6px 12px; }
+.admin-user-form {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) auto;
+    align-items: end;
+    gap: 11px;
+}
+.admin-user-form button { min-height: 38px; }
+.user-menu {
+    min-height: auto;
+    margin-left: auto;
+    padding: 2px 0;
+    border: 0;
+    color: #b7cad5;
+    background: transparent;
+    font-size: 10px;
+    font-weight: 400;
+}
+.user-menu:hover { color: #fff; background: transparent; }
 input:focus, select:focus, textarea:focus { border-color: #68add3; box-shadow: 0 0 0 3px rgba(22,131,197,.11); }
 .filter-form button { min-width: 86px; }
 .table-wrap { overflow-x: auto; }

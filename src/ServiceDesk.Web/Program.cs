@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using ServiceDesk.Domain.Abstractions;
 using ServiceDesk.Domain.Entities;
 using ServiceDesk.Domain.Enums;
@@ -6,6 +7,8 @@ using ServiceDesk.Infrastructure.Data;
 using ServiceDesk.Infrastructure.Tickets;
 using ServiceDesk.Web.Authentication;
 using ServiceDesk.Web.Infrastructure;
+
+DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 var publicDemoEnabled = builder.Configuration.GetValue<bool>("ServiceDesk:PublicDemo");
@@ -21,19 +24,37 @@ if (!builder.Environment.IsDevelopment() && !publicDemoEnabled)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Data Source=service-desk.db";
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connectionString));
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    if (connectionString.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase))
+    {
+        options.UseSqlite(connectionString);
+    }
+    else
+    {
+        options.UseNpgsql(connectionString);
+    }
+});
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddRazorPages();
 builder.Services
     .AddAuthentication(options =>
     {
-        options.DefaultAuthenticateScheme = LocalDevelopmentAuthHandler.SchemeName;
-        options.DefaultChallengeScheme = LocalDevelopmentAuthHandler.SchemeName;
-        options.DefaultForbidScheme = LocalDevelopmentAuthHandler.SchemeName;
+        options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultForbidScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     })
-    .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions,
-        LocalDevelopmentAuthHandler>(LocalDevelopmentAuthHandler.SchemeName, _ => { });
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Login";
+        options.AccessDeniedPath = "/Login/AccessDenied";
+    });
 builder.Services.AddAuthorization(options =>
-    options.AddPolicy("Agents", policy => policy.RequireAuthenticatedUser()));
+{
+    options.AddPolicy("Agents", policy => policy.RequireRole(UserRoles.Agent));
+    options.AddPolicy("Customers", policy => policy.RequireRole(UserRoles.Customer));
+    options.AddPolicy("Administrators", policy => policy.RequireRole(UserRoles.Administrator));
+});
 
 builder.Services.AddScoped<DevelopmentRequestContext>();
 builder.Services.AddScoped<ITenantContext>(services =>
@@ -51,7 +72,22 @@ await InitializeDemoDatabaseAsync(app);
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapGet("/", () => Results.Redirect("/Portal"));
+app.MapGet("/", (HttpContext httpContext) =>
+{
+    if (httpContext.User.IsInRole(UserRoles.Administrator))
+    {
+        return Results.Redirect("/Admin");
+    }
+
+    if (httpContext.User.IsInRole(UserRoles.Agent))
+    {
+        return Results.Redirect("/Tickets");
+    }
+
+    return Results.Redirect(httpContext.User.Identity?.IsAuthenticated == true
+        ? "/Portal"
+        : "/Login");
+});
 app.MapRazorPages();
 
 await app.RunAsync();
@@ -61,9 +97,31 @@ static async Task InitializeDemoDatabaseAsync(WebApplication app)
     await using var scope = app.Services.CreateAsyncScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await dbContext.Database.EnsureCreatedAsync();
+    await dbContext.Database.ExecuteSqlRawAsync(
+        """
+        CREATE TABLE IF NOT EXISTS app_users (
+            user_id TEXT NOT NULL CONSTRAINT pk_app_users PRIMARY KEY,
+            tenant_id TEXT NOT NULL,
+            username TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
+            display_name TEXT NOT NULL,
+            role TEXT NOT NULL,
+            active INTEGER NOT NULL
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS ix_app_users_tenant_id_username
+            ON app_users (tenant_id, username);
+        CREATE TABLE IF NOT EXISTS app_roles (
+            role_id TEXT NOT NULL CONSTRAINT pk_app_roles PRIMARY KEY,
+            tenant_id TEXT NOT NULL,
+            name TEXT NOT NULL
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS ix_app_roles_tenant_id_name
+            ON app_roles (tenant_id, name);
+        """);
 
     if (await dbContext.Tenants.AnyAsync())
     {
+        await SeedUsersAsync(dbContext);
         return;
     }
 
@@ -84,7 +142,7 @@ static async Task InitializeDemoDatabaseAsync(WebApplication app)
         TenantId = tenant.TenantId,
         Name = "Demo Customer",
         Status = CustomerOrganisationStatus.Active,
-        PrimaryContactId = DevelopmentRequestContext.UserIdValue
+        PrimaryContactId = DevelopmentRequestContext.ClientUserIdValue
     };
     var triageGroup = new ResolverGroup
     {
@@ -111,13 +169,13 @@ static async Task InitializeDemoDatabaseAsync(WebApplication app)
         {
             TenantId = tenant.TenantId,
             GroupId = triageGroup.GroupId,
-            AgentUserId = DevelopmentRequestContext.UserIdValue
+            AgentUserId = DevelopmentRequestContext.AgentUserIdValue
         },
         new GroupMember
         {
             TenantId = tenant.TenantId,
             GroupId = fulfilmentGroup.GroupId,
-            AgentUserId = DevelopmentRequestContext.UserIdValue
+            AgentUserId = DevelopmentRequestContext.AgentUserIdValue
         });
     dbContext.CatalogueItems.Add(new CatalogueItem
     {
@@ -166,5 +224,60 @@ static async Task InitializeDemoDatabaseAsync(WebApplication app)
         ResolutionMinutes = 5760,
         PausedStatusesJson = "[\"WaitingForRequester\"]"
     });
+    await dbContext.SaveChangesAsync();
+    await SeedUsersAsync(dbContext);
+}
+
+static async Task SeedUsersAsync(ApplicationDbContext dbContext)
+{
+    if (await dbContext.AppUsers.AnyAsync())
+    {
+        await SeedRolesAsync(dbContext);
+        return;
+    }
+
+    dbContext.AppUsers.AddRange(
+        new AppUser
+        {
+            UserId = DevelopmentRequestContext.AgentUserIdValue,
+            TenantId = DevelopmentRequestContext.TenantIdValue,
+            Username = "agent",
+            PasswordHash = DemoPasswordHasher.Hash("agent123"),
+            DisplayName = "Service Agent",
+            Role = UserRoles.Agent
+        },
+        new AppUser
+        {
+            UserId = DevelopmentRequestContext.AdminUserIdValue,
+            TenantId = DevelopmentRequestContext.TenantIdValue,
+            Username = "admin",
+            PasswordHash = DemoPasswordHasher.Hash("admin123"),
+            DisplayName = "System Administrator",
+            Role = UserRoles.Administrator
+        },
+        new AppUser
+        {
+            UserId = DevelopmentRequestContext.ClientUserIdValue,
+            TenantId = DevelopmentRequestContext.TenantIdValue,
+            Username = "client",
+            PasswordHash = DemoPasswordHasher.Hash("client123"),
+            DisplayName = "Demo Customer",
+            Role = UserRoles.Customer
+        });
+    await dbContext.SaveChangesAsync();
+    await SeedRolesAsync(dbContext);
+}
+
+static async Task SeedRolesAsync(ApplicationDbContext dbContext)
+{
+    if (await dbContext.AppRoles.AnyAsync())
+    {
+        return;
+    }
+
+    dbContext.AppRoles.AddRange(
+        new AppRole { TenantId = DevelopmentRequestContext.TenantIdValue, Name = UserRoles.Customer },
+        new AppRole { TenantId = DevelopmentRequestContext.TenantIdValue, Name = UserRoles.Agent },
+        new AppRole { TenantId = DevelopmentRequestContext.TenantIdValue, Name = UserRoles.Administrator });
     await dbContext.SaveChangesAsync();
 }

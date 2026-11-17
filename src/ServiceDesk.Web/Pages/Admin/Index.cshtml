@@ -1,0 +1,106 @@
+@page
+@model ServiceDesk.Web.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Administrator dashboard";
+}
+
+<div class="page-heading">
+    <div>
+        <div class="eyebrow">ADMINISTRATION</div>
+        <h1>Administrator dashboard</h1>
+        <p>Manage service desk roles and user access.</p>
+    </div>
+</div>
+
+@if (TempData["AdminStatusMessage"] is string message)
+{
+    <p role="status">@message</p>
+}
+<div asp-validation-summary="All"></div>
+
+<section class="panel">
+    <div class="panel-heading">
+        <div>
+            <div class="eyebrow">ROLES</div>
+            <h2>Create a role</h2>
+        </div>
+    </div>
+    <form method="post" asp-page-handler="CreateRole" class="filter-form">
+        <div class="field search-field">
+            <label asp-for="NewRoleName">Role name</label>
+            <input asp-for="NewRoleName" placeholder="For example: Service Manager" required />
+        </div>
+        <button type="submit">Create role</button>
+    </form>
+    <p class="muted">Available roles: @string.Join(", ", Model.Roles.Select(role => role.Name))</p>
+</section>
+
+<section class="panel">
+    <div class="panel-heading">
+        <div>
+            <div class="eyebrow">USERS</div>
+            <h2>Create a user</h2>
+        </div>
+    </div>
+    <form method="post" asp-page-handler="CreateUser" class="admin-user-form">
+        <div>
+            <label asp-for="NewDisplayName">Display name</label>
+            <input asp-for="NewDisplayName" required />
+        </div>
+        <div>
+            <label asp-for="NewUsername">Username</label>
+            <input asp-for="NewUsername" autocomplete="off" required />
+        </div>
+        <div>
+            <label asp-for="NewPassword">Password</label>
+            <input asp-for="NewPassword" type="password" autocomplete="new-password" required />
+        </div>
+        <div>
+            <label asp-for="NewUserRole">Role</label>
+            <select asp-for="NewUserRole" required>
+                <option value="">Select a role...</option>
+                @foreach (var role in Model.Roles)
+                {
+                    <option value="@role.Name">@role.Name</option>
+                }
+            </select>
+        </div>
+        <button type="submit">Create user</button>
+    </form>
+</section>
+
+<section class="panel">
+    <div class="panel-heading">
+        <div>
+            <div class="eyebrow">USERS</div>
+            <h2>Update user roles</h2>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>User</th><th>Username</th><th>Current role</th><th>Change role</th></tr></thead>
+            <tbody>
+            @foreach (var user in Model.Users)
+            {
+                <tr>
+                    <td>@user.DisplayName</td>
+                    <td>@user.Username</td>
+                    <td>@user.Role</td>
+                    <td>
+                        <form method="post" asp-page-handler="UpdateUserRole" class="inline-form">
+                            <input type="hidden" name="UserId" value="@user.UserId" />
+                            <select name="SelectedRole">
+                                @foreach (var role in Model.Roles)
+                                {
+                                    <option value="@role.Name" selected="@(role.Name == user.Role)">@role.Name</option>
+                                }
+                            </select>
+                            <button type="submit">Save</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

@@ -10,6 +10,11 @@
 *.sqlite
 *.sqlite3
 
+# Local environment variables and secrets
+.env
+.env.*
+!.env.example
+
 # User-specific IDE files
 .vs/
 .vscode/*

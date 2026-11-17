@@ -240,6 +240,15 @@ public sealed class TicketService : ITicketService
             ChangedBy = agentId,
             ChangedAt = now
         });
+        ticket.StatusHistory.Add(new TicketStatusHistory
+        {
+            StatusHistoryId = Guid.NewGuid(),
+            TenantId = _tenantContext.TenantId,
+            TicketId = ticket.TicketId,
+            Status = initialStatus,
+            ChangedBy = agentId,
+            EnteredAt = now
+        });
 
         _dbContext.Tickets.Add(ticket);
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -296,6 +305,59 @@ public sealed class TicketService : ITicketService
             Content = $"Ticket transferred to {destination.Name}."
         });
 
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task AssignToCurrentAgentAsync(
+        Guid ticketId,
+        CancellationToken cancellationToken = default)
+    {
+        var ticket = await GetAccessibleTicketForUpdateAsync(ticketId, cancellationToken);
+        ticket.AssigneeUserId = CurrentAgentId;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task UpdateStatusAsync(
+        Guid ticketId,
+        TicketStatus status,
+        CancellationToken cancellationToken = default)
+    {
+        if (!Enum.IsDefined(status))
+        {
+            throw new ArgumentException("The selected ticket status is invalid.", nameof(status));
+        }
+
+        var ticket = await GetAccessibleTicketForUpdateAsync(ticketId, cancellationToken);
+        if (ticket.Status == status)
+        {
+            return;
+        }
+
+        var now = _timeProvider.GetUtcNow();
+        ticket.Status = status;
+        ticket.ResolvedAt = status is TicketStatus.Resolved or TicketStatus.Closed
+            ? ticket.ResolvedAt ?? now
+            : null;
+        _dbContext.TicketStatusHistories.Add(new TicketStatusHistory
+        {
+            StatusHistoryId = Guid.NewGuid(),
+            TenantId = ticket.TenantId,
+            TicketId = ticket.TicketId,
+            Status = status,
+            ChangedBy = CurrentAgentId,
+            EnteredAt = now
+        });
+        _dbContext.TicketActivities.Add(new TicketActivity
+        {
+            ActivityId = Guid.NewGuid(),
+            TenantId = ticket.TenantId,
+            TicketId = ticket.TicketId,
+            ActorId = CurrentAgentId,
+            OccurredAt = now,
+            Kind = TicketActivityKind.System,
+            Visibility = TicketActivityVisibility.Public,
+            Content = $"Ticket status changed to {status}."
+        });
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 

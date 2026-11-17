@@ -1,0 +1,62 @@
+@page
+@model ServiceDesk.Web.Pages.Portal.MyTicketsModel
+@{
+    ViewData["Title"] = "My tickets";
+}
+
+<div class="page-heading">
+    <div>
+        <div class="eyebrow">CUSTOMER PORTAL</div>
+        <h1>My tickets</h1>
+        <p>Track incidents and service requests submitted to the service desk.</p>
+    </div>
+    <div class="heading-actions">
+        <a class="button" asp-page="/Portal/Index">Submit a new request</a>
+    </div>
+</div>
+
+<section class="panel">
+    @if (Model.Tickets.Count == 0)
+    {
+        <div class="empty-state">
+            <strong>No tickets yet</strong>
+            Submitted incidents and service requests will appear here.
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Resolver group</th>
+                        <th>Created</th>
+                        <th>SLA due</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var ticket in Model.Tickets)
+                {
+                    var statusClass = ticket.Status.ToString().ToLowerInvariant();
+                    var priorityClass = ticket.Priority.ToString().ToLowerInvariant();
+                    <tr>
+                        <td><strong>@ticket.Reference</strong></td>
+                        <td>@ticket.Title</td>
+                        <td>@ticket.Type</td>
+                        <td><span class="status-badge status-@statusClass">@ticket.Status</span></td>
+                        <td><span class="priority-badge priority-@priorityClass">@ticket.Priority</span></td>
+                        <td>@(ticket.Group?.Name ?? "Not assigned")</td>
+                        <td>@ticket.CreatedAt.ToString("g")</td>
+                        <td>@(ticket.ResolutionDueAt?.ToString("g") ?? "Not configured")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

@@ -26,6 +26,8 @@ public sealed class ApplicationDbContext : DbContext
     private Guid CurrentTenantId => _currentTenantId;
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<AppUser> AppUsers => Set<AppUser>();
+    public DbSet<AppRole> AppRoles => Set<AppRole>();
     public DbSet<CustomerOrganisation> CustomerOrganisations => Set<CustomerOrganisation>();
     public DbSet<ResolverGroup> ResolverGroups => Set<ResolverGroup>();
     public DbSet<GroupMember> GroupMembers => Set<GroupMember>();
@@ -45,6 +47,8 @@ public sealed class ApplicationDbContext : DbContext
             .HasQueryFilter(tenant => tenant.TenantId == CurrentTenantId);
 
         ConfigureTenantFilter<CustomerOrganisation>(modelBuilder);
+        ConfigureTenantFilter<AppUser>(modelBuilder);
+        ConfigureTenantFilter<AppRole>(modelBuilder);
         ConfigureTenantFilter<ResolverGroup>(modelBuilder);
         ConfigureTenantFilter<GroupMember>(modelBuilder);
         ConfigureTenantFilter<Ticket>(modelBuilder);
@@ -57,6 +61,16 @@ public sealed class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<CustomerOrganisation>()
             .HasAlternateKey(customer => new { customer.TenantId, customer.CustomerId });
+
+        modelBuilder.Entity<AppUser>()
+            .ToTable("app_users")
+            .HasIndex(user => new { user.TenantId, user.Username })
+            .IsUnique();
+
+        modelBuilder.Entity<AppRole>()
+            .ToTable("app_roles")
+            .HasIndex(role => new { role.TenantId, role.Name })
+            .IsUnique();
 
         modelBuilder.Entity<ResolverGroup>()
             .HasAlternateKey(group => new { group.TenantId, group.GroupId });
