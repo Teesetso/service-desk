@@ -97,10 +97,6 @@ Before using this application with real users or outside the public demo:
 Resolve tenants server-side; do not accept a tenant ID from an untrusted form or query parameter.
 
 
-
-=======
->>>>>>> 12d129e (Update service desk application)
-
 | Route | Purpose |
 | --- | --- |
 | `/Portal` | Requester catalogue, knowledge search, incident submission, and service requests |
